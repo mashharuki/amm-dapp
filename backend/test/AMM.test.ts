@@ -181,4 +181,96 @@ describe("AMM", function () {
             ).to.equal(equivalentToken1);
         });
     });
+
+    describe("getWithdrawEstimate", function () {
+        it("Should get the right number of estimated amount", async function () {
+            // deploy contract
+            const {
+                amm,
+                token0,
+                amountOtherProvided0,
+                token1,
+                amountOtherProvided1,
+                otherAccount,
+            } = await loadFixture(deployContractWithLiquidity);
+        
+            // get share
+            let share = await amm.share(otherAccount.address);
+            // check
+            expect(await amm.getWithdrawEstimate(token0.address, share)).to.eql(
+                amountOtherProvided0
+            );
+            expect(await amm.getWithdrawEstimate(token1.address, share)).to.eql(
+                amountOtherProvided1
+            );
+        });
+    });
+
+    describe("withdraw", function () {
+        it("Token should be moved", async function () {
+            // deploy contract
+            const {
+                amm,
+                token0,
+                amountOwnerProvided0,
+                token1,
+                amountOwnerProvided1,
+                owner,
+            } = await loadFixture(deployContractWithLiquidity);
+            // get balance
+            const ownerBalance0Before = await token0.balanceOf(owner.address);
+            const ownerBalance1Before = await token1.balanceOf(owner.address);
+        
+            const ammBalance0Before = await token0.balanceOf(amm.address);
+            const ammBalance1Before = await token1.balanceOf(amm.address);
+            // get share
+            let share = await amm.share(owner.address);
+            // withdraw
+            await amm.withdraw(share);
+            // check
+            expect(await token0.balanceOf(owner.address)).to.eql(
+                ownerBalance0Before.add(amountOwnerProvided0)
+            );
+            expect(await token1.balanceOf(owner.address)).to.eql(
+                ownerBalance1Before.add(amountOwnerProvided1)
+            );
+            expect(await token0.balanceOf(amm.address)).to.eql(
+                ammBalance0Before.sub(amountOwnerProvided0)
+            );
+            expect(await token1.balanceOf(amm.address)).to.eql(
+                ammBalance1Before.sub(amountOwnerProvided1)
+            );
+        });
+      
+        it("Should set the right number of amm details", async function () {
+            // deploy contract
+            const {
+                amm,
+                token0,
+                amountOwnerProvided0,
+                token1,
+                amountOwnerProvided1,
+                owner,
+                otherAccount,
+            } = await loadFixture(deployContractWithLiquidity);
+        
+            // get share
+            let share = await amm.share(otherAccount.address);
+            // withdraw
+            await amm.connect(otherAccount).withdraw(share);
+        
+            const precision = await amm.PRECISION();
+            const BN100 = BigNumber.from("100");
+        
+            expect(await amm.totalShare()).to.equal(BN100.mul(precision));
+            expect(await amm.share(owner.address)).to.equal(BN100.mul(precision));
+            expect(await amm.share(otherAccount.address)).to.equal(0);
+            expect(await amm.totalAmount(token0.address)).to.equal(
+                amountOwnerProvided0
+            );
+            expect(await amm.totalAmount(token1.address)).to.equal(
+                amountOwnerProvided1
+            );
+        });
+    });
 });

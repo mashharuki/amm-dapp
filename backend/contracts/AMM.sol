@@ -124,4 +124,45 @@ contract AMM {
 
         return newshare;
     }
+
+    /**
+     * get share amount function
+     */
+    function getWithdrawEstimate(IERC20 _token, uint256 _share)
+        public
+        view
+        activePool
+        validToken(_token)
+        returns (uint256)
+    {
+        require(_share <= totalShare, "Share should be less than totalShare");
+        // return
+        return (_share * totalAmount[_token]) / totalShare;
+    }
+
+    /**
+     * withdraw function
+     */
+    function withdraw(uint256 _share)
+        external
+        activePool
+        returns (uint256, uint256)
+    {
+        require(_share > 0, "share cannot be zero!");
+        require(_share <= share[msg.sender], "Insufficient share");
+        // get amount for withdraw
+        uint256 amountTokenX = getWithdrawEstimate(tokenX, _share);
+        uint256 amountTokenY = getWithdrawEstimate(tokenY, _share);
+        // decrement from total share
+        share[msg.sender] -= _share;
+        totalShare -= _share;
+        // decrement
+        totalAmount[tokenX] -= amountTokenX;
+        totalAmount[tokenY] -= amountTokenY;
+        // transfer
+        tokenX.transfer(msg.sender, amountTokenX);
+        tokenY.transfer(msg.sender, amountTokenY);
+
+        return (amountTokenX, amountTokenY);
+    }
 }
