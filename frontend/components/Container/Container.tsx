@@ -4,6 +4,8 @@ import styles from "./Container.module.css";
 import Details from "../Details/Details";
 import Faucet from "../SelectTab/Faucet";
 import Provide from "../SelectTab/Provide";
+import Swap from "../SelectTab/Swap";
+import Withdraw from "../SelectTab/Withdraw";
 
 type Props = {
   currentAccount: string | undefined;
@@ -74,7 +76,15 @@ export default function Container({ currentAccount }: Props) {
                 Faucet
               </div>
             </div>
-            {activeTab === "Swap" && <div>swap</div>}
+            {activeTab === "Swap" && (
+              <Swap
+                token0={token0}
+                token1={token1}
+                amm={amm}
+                currentAccount={currentAccount}
+                updateDetails={updateDetails}
+              />
+            )}
             {activeTab === "Provide" && (
               <Provide
                 token0={token0}
@@ -84,7 +94,15 @@ export default function Container({ currentAccount }: Props) {
                 updateDetails={updateDetails}
               />
             )}
-            {activeTab === "Withdraw" && <div>withdraw</div>}
+            {activeTab === "Withdraw" && (
+              <Withdraw
+                token0={token0}
+                token1={token1}
+                amm={amm}
+                currentAccount={currentAccount}
+                updateDetails={updateDetails}
+              />
+            )}
             {activeTab === "Faucet" && (
               <Faucet
                 token0={token0}
