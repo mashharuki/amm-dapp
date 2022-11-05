@@ -165,4 +165,69 @@ contract AMM {
 
         return (amountTokenX, amountTokenY);
     }
+
+    /**
+     * Swap元のトークン量からSwap先のトークン量を算出
+     */
+    function getSwapEstimateOut(IERC20 _inToken, uint256 _amountIn)
+        public
+        view
+        activePool
+        validToken(_inToken)
+        returns (uint256)
+    {
+        IERC20 outToken = pairToken(_inToken);
+
+        uint256 amountInWithFee = _amountIn * 997;
+
+        uint256 numerator = amountInWithFee * totalAmount[outToken];
+        uint256 denominator = totalAmount[_inToken] * 1000 + amountInWithFee;
+        uint256 amountOut = numerator / denominator;
+
+        return amountOut;
+    }
+
+    /**
+     * Swap先のトークン量からSwap元のトークン量を算出する。
+     */
+    function getSwapEstimateIn(IERC20 _outToken, uint256 _amountOut)
+        public
+        view
+        activePool
+        validToken(_outToken)
+        returns (uint256)
+    {
+        require(
+            _amountOut < totalAmount[_outToken],
+            "Insufficient pool balance"
+        );
+        IERC20 inToken = pairToken(_outToken);
+
+        uint256 numerator = 1000 * totalAmount[inToken] * _amountOut;
+        uint256 denominator = 997 * (totalAmount[_outToken] - _amountOut);
+        uint256 amountIn = numerator / denominator;
+
+        return amountIn;
+    }
+
+    /**
+     * Swap function
+     */
+    function swap(
+        IERC20 _inToken,
+        IERC20 _outToken,
+        uint256 _amountIn
+    ) external activePool validTokens(_inToken, _outToken) returns (uint256) {
+        require(_amountIn > 0, "Amount cannot be zero!");
+        // get Swap EstimateOut
+        uint256 amountOut = getSwapEstimateOut(_inToken, _amountIn);
+        // transfer
+        _inToken.transferFrom(msg.sender, address(this), _amountIn);
+        // total Amount
+        totalAmount[_inToken] += _amountIn;
+        totalAmount[_outToken] -= amountOut;
+        // transfer
+        _outToken.transfer(msg.sender, amountOut);
+        return amountOut;
+    }
 }
