@@ -1,0 +1,19 @@
+{
+  "name": "amm-dapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/mashharuki/amm-dapp",
+  "author": "mashharuki",
+  "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "pkgs/*"
+  ],
+  "scripts": {
+    "frontend:build": "yarn workspace frontend build",
+    "frontend:dev": "yarn workspace frontend dev",
+    "backend:test": "yarn workspace backend test",
+    "backend:clean": "yarn workspace backend clean",
+    "backend:compile": "yarn workspace backend compile"
+  }
+}
